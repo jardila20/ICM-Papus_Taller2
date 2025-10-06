@@ -1,22 +1,37 @@
 package com.example.icm_papus_taller2
 
+import android.content.Intent
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
+import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 
 class MainActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+
+        // Referencias a los botones
+        val btnContactos: ImageButton = findViewById(R.id.btnContactos)
+        val btnImagen: ImageButton = findViewById(R.id.btnImagen)
+        val btnMapa: ImageButton = findViewById(R.id.btnMapa)
+
+        // Abrir actividad de Contactos
+        btnContactos.setOnClickListener {
+            val intent = Intent(this, ContactosActivity::class.java)
+            startActivity(intent)
         }
-        //nnlk
-        //
+
+        // Abrir actividad de Imagen (Galería/Cámara)
+        btnImagen.setOnClickListener {
+            val intent = Intent(this, ImagenActivity::class.java)
+            startActivity(intent)
+        }
+
+        // Abrir actividad de Mapa
+        btnMapa.setOnClickListener {
+            val intent = Intent(this, MapaActivity::class.java)
+            startActivity(intent)
+        }
     }
 }

@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">ICM-Papus_Taller2</string>
+    <string name="contacts" />
+    <string name="camera" />
+    <string name="map" />
 </resources>
