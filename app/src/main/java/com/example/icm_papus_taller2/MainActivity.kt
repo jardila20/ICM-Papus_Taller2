@@ -11,7 +11,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Referencias a los botones
         val btnContactos: ImageButton = findViewById(R.id.btnContactos)
         val btnImagen: ImageButton = findViewById(R.id.btnImagen)
         val btnMapa: ImageButton = findViewById(R.id.btnMapa)
@@ -22,7 +21,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // Abrir actividad de Imagen (Galería/Cámara)
+        // Abrir actividad de Imagen
         btnImagen.setOnClickListener {
             val intent = Intent(this, ImagenActivity::class.java)
             startActivity(intent)
