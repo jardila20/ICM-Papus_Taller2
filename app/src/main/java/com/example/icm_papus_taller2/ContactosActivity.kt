@@ -7,9 +7,7 @@ import android.os.Bundle
 import android.provider.ContactsContract
 import android.widget.ListView
 import android.widget.SimpleCursorAdapter
-import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -17,78 +15,76 @@ import androidx.core.content.ContextCompat
 
 class ContactosActivity : AppCompatActivity() {
 
-    private lateinit var tvEstado: TextView
     private lateinit var listView: ListView
     private var cursor: Cursor? = null
     private var adapter: SimpleCursorAdapter? = null
 
-    // 1) Activity Result API para pedir el permiso en runtime (recomendado)
-    private val requestContactsPermission = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            Toast.makeText(this, "Permiso de acceso a contactos concedido", Toast.LENGTH_SHORT).show()
-            cargarContactos()
-        } else {
-            Toast.makeText(this, "No se puede acceder a contactos sin permiso", Toast.LENGTH_LONG).show()
+    // Launcher para pedir READ_CONTACTS en runtime
+    private val requestContactsPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                cargarContactos()
+            } else {
+                Toast.makeText(
+                    this,
+                    "Permiso de contactos denegado. No se pueden mostrar contactos.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_contactos)
 
-        listView = findViewById(R.id.lvContactos)
-
+        listView = findViewById(R.id.listViewContactos)
         asegurarPermisoYListar()
     }
 
     private fun asegurarPermisoYListar() {
         val permiso = Manifest.permission.READ_CONTACTS
         when {
-            // 2) Ya hay permiso
             ContextCompat.checkSelfPermission(this, permiso) == PackageManager.PERMISSION_GRANTED -> {
-                tvEstado.text = "Permiso: CONCEDIDO"
                 cargarContactos()
             }
-            // 3) Mostrar justificación si el usuario ya negó antes
             shouldShowRequestPermissionRationale(permiso) -> {
                 mostrarJustificacion {
                     requestContactsPermission.launch(permiso)
                 }
             }
-            // 4) Solicitar directamente
-            else -> requestContactsPermission.launch(permiso)
+            else -> {
+                requestContactsPermission.launch(permiso)
+            }
         }
     }
 
     private fun mostrarJustificacion(onContinue: () -> Unit) {
         AlertDialog.Builder(this)
             .setTitle("Acceso a contactos")
-            .setMessage("Necesitamos leer tus contactos para listarlos en pantalla. Sin este permiso, no podremos mostrar nada.")
-            .setPositiveButton("Continuar") { d, _ ->
-                d.dismiss()
-                onContinue()
-            }
+            .setMessage("Necesitamos leer tus contactos para listarlos en pantalla.")
+            .setPositiveButton("Continuar") { d, _ -> d.dismiss(); onContinue() }
             .setNegativeButton("Cancelar") { d, _ -> d.dismiss() }
             .show()
     }
 
     private fun cargarContactos() {
-        // 5) Consultar el proveedor de contactos (después de que el permiso esté concedido)
+        // Proyección: OBLIGATORIO que incluya _ID para SimpleCursorAdapter
         val projection = arrayOf(
             ContactsContract.Contacts._ID,
             ContactsContract.Contacts.DISPLAY_NAME_PRIMARY
         )
 
+        // Orden alfabético por nombre visible
+        val sortOrder = ContactsContract.Contacts.DISPLAY_NAME_PRIMARY + " ASC"
+
+        // Cierra cursor previo si existía
         cursor?.close()
         cursor = contentResolver.query(
             ContactsContract.Contacts.CONTENT_URI,
             projection,
+            null, // puedes filtrar: "${ContactsContract.Contacts.HAS_PHONE_NUMBER} = 1"
             null,
-            null,
-            ContactsContract.Contacts.DISPLAY_NAME_PRIMARY + " ASC"
+            sortOrder
         )
 
         if (cursor == null) {
@@ -96,18 +92,17 @@ class ContactosActivity : AppCompatActivity() {
             return
         }
 
-        // 6) Vincular el cursor a la lista con un adapter sencillo
-        adapter?.changeCursor(cursor) ?: run {
-            adapter = SimpleCursorAdapter(
-                this,
-                android.R.layout.simple_list_item_2,
-                cursor,
-                arrayOf(ContactsContract.Contacts._ID, ContactsContract.Contacts.DISPLAY_NAME_PRIMARY),
-                intArrayOf(android.R.id.text1, android.R.id.text2),
-                0
-            )
-            listView.adapter = adapter
-        }
+        // Mapea DISPLAY_NAME_PRIMARY -> tvNombre (el ícono ya está en el layout)
+        adapter = SimpleCursorAdapter(
+            this,
+            R.layout.item_contacto,
+            cursor,
+            arrayOf(ContactsContract.Contacts.DISPLAY_NAME_PRIMARY),
+            intArrayOf(R.id.tvNombre),
+            0
+        )
+
+        listView.adapter = adapter
     }
 
     override fun onDestroy() {
