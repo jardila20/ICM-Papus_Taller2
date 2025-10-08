@@ -41,7 +41,7 @@ import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-// Ruta (OSM Bonuspack / OSRM por JitPack)
+//pal Bono
 import org.osmdroid.bonuspack.routing.OSRMRoadManager
 import org.osmdroid.bonuspack.routing.Road
 import org.osmdroid.bonuspack.routing.RoadManager
@@ -57,7 +57,6 @@ class MapaActivity : AppCompatActivity(), SensorEventListener {
     private val locationListener = LocationListener { loc -> loc?.let { onLocation(it) } }
     private var currentLocation: Location? = null
 
-    // Control de cámara (para que no “salte”)
     private var lastCameraLoc: Location? = null
     private var lastCameraTs: Long = 0L
     private val CAMERA_MIN_DIST_M = 25f
@@ -70,16 +69,16 @@ class MapaActivity : AppCompatActivity(), SensorEventListener {
     private val LUX_UMBRAL_OSCURO = 20f
     private var darkApplied = false
 
-    // --- Marcadores ---
+
     private var currentMarker: Marker? = null
     private var searchMarker: Marker? = null
     private var lastLoggedLocation: Location? = null
 
-    // --- JSON interno ---
+
     private val jsonFileName = "ubicaciones.json"
     private val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
-    // --- Permisos ---
+
     private val requestLocation =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { res ->
             val granted = (res[Manifest.permission.ACCESS_FINE_LOCATION] == true) ||
@@ -88,7 +87,7 @@ class MapaActivity : AppCompatActivity(), SensorEventListener {
             else Toast.makeText(this, "Permiso de ubicación denegado", Toast.LENGTH_LONG).show()
         }
 
-    // --- Ruta ---
+
     private lateinit var roadManager: RoadManager
     private var routeOverlay: Polyline? = null
 
@@ -116,7 +115,7 @@ class MapaActivity : AppCompatActivity(), SensorEventListener {
         })
         map.overlays.add(eventsOverlay)
 
-        // Servicios
+
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
@@ -128,7 +127,7 @@ class MapaActivity : AppCompatActivity(), SensorEventListener {
 
         checkPermissionAndStart()
 
-        // Buscar por texto (IME action Done)
+
         etBuscar.setOnEditorActionListener { v, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 val query = v.text.toString().trim()
@@ -138,7 +137,7 @@ class MapaActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
-    // ===== Permisos / Ubicación =====
+    // Permisos / Ubicación
     private fun hasLocationPermission(): Boolean {
         val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         val coarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -156,12 +155,10 @@ class MapaActivity : AppCompatActivity(), SensorEventListener {
     private fun startLocationUpdates() {
         if (!hasLocationPermission()) return
         try {
-            // Menos ruido: mínimo 5 m entre updates
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000L, 5f, locationListener)
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 3000L, 5f, locationListener)
         } catch (_: SecurityException) {}
 
-        // Cámara inicial con lastKnown
         if (hasLocationPermission()) {
             try {
                 val last = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
@@ -189,7 +186,6 @@ class MapaActivity : AppCompatActivity(), SensorEventListener {
         stopLocationUpdates()
     }
 
-    // ===== Ubicación + JSON + cámara suave =====
     private fun onLocation(loc: Location) {
         currentLocation = loc
 
@@ -206,7 +202,7 @@ class MapaActivity : AppCompatActivity(), SensorEventListener {
         }
         map.invalidate()
 
-        // Solo recentrar si pasó tiempo y distancia mínimos
+
         val now = System.currentTimeMillis()
         val movedEnough = lastCameraLoc?.distanceTo(loc)?.let { it > CAMERA_MIN_DIST_M } ?: true
         val timeEnough = now - lastCameraTs > CAMERA_MIN_INTERVAL_MS
@@ -216,7 +212,6 @@ class MapaActivity : AppCompatActivity(), SensorEventListener {
             lastCameraTs = now
         }
 
-        // Registrar JSON si >30 m
         val last = lastLoggedLocation
         val moved30 = last == null || last.distanceTo(loc) > 30f
         if (moved30) {
@@ -260,7 +255,7 @@ class MapaActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
-    // ===== Geocoder: texto → punto (actualiza siempre el marcador) =====
+
     private fun geocodificarYMarcar(query: String) {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -276,7 +271,7 @@ class MapaActivity : AppCompatActivity(), SensorEventListener {
                 val p = GeoPoint(addr.latitude, addr.longitude)
                 val titulo = addr.getAddressLine(0) ?: query
                 withContext(Dispatchers.Main) {
-                    colocarSearchMarker(p.latitude, p.longitude, titulo) // ✅ actualiza título/snippet
+                    colocarSearchMarker(p.latitude, p.longitude, titulo)
                     showDistanceToastTo(p)
                     drawRouteFromCurrentTo(p)
                 }
@@ -288,7 +283,6 @@ class MapaActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
-    // ===== Marcador de destino (siempre se refresca) =====
     private fun colocarSearchMarker(lat: Double, lng: Double, titulo: String) {
         val p = GeoPoint(lat, lng)
         if (searchMarker == null) {
@@ -307,10 +301,10 @@ class MapaActivity : AppCompatActivity(), SensorEventListener {
             }
         }
         map.controller.animateTo(p, 17.0, 800L)
-        map.invalidate() // ✅ fuerza redibujado para que no quede el título anterior
+        map.invalidate()
     }
 
-    // ===== Long press: punto → dirección (y ruta) =====
+
     private fun onLongPressAt(p: GeoPoint) {
         lifecycleScope.launch(Dispatchers.IO) {
             var titulo = "Marcador"
@@ -341,7 +335,7 @@ class MapaActivity : AppCompatActivity(), SensorEventListener {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
     }
 
-    // ===== Sensor de luz: modo oscuro / claro =====
+    // Sensor de luz: modo oscuro / claro
     override fun onSensorChanged(event: SensorEvent) {
         if (event.sensor.type != Sensor.TYPE_LIGHT) return
         val lux = event.values[0]
@@ -372,7 +366,7 @@ class MapaActivity : AppCompatActivity(), SensorEventListener {
         map.invalidate()
     }
 
-    // ===== Ruta con OSRM (Bonuspack) =====
+    // Ruta con OSRM (Bonuspack)
     private fun drawRouteFromCurrentTo(dest: GeoPoint) {
         val here = currentLocation
         if (here == null) {

@@ -8,7 +8,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Barra de búsqueda flotante con "rounded corners" -->
+
     <EditText
         android:id="@+id/etBuscar"
         android:layout_width="match_parent"

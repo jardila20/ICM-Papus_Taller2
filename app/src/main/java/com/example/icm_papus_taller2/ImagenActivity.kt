@@ -24,14 +24,14 @@ class ImagenActivity : AppCompatActivity() {
     private lateinit var imgPreview: ImageView
     private lateinit var tvProps: TextView
 
-    /** URI temporal donde se guardará la foto a FULL RES en la galería */
+
     private var photoUri: Uri? = null
 
-    /** Qué acción ejecutar después de conceder permiso */
+
     private enum class PendingAction { NONE, OPEN_GALLERY, OPEN_CAMERA }
     private var pendingAction: PendingAction = PendingAction.NONE
 
-    /** Selector moderno de galería (solo imágenes) */
+
     private val pickImage =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             if (uri != null) {
@@ -42,32 +42,32 @@ class ImagenActivity : AppCompatActivity() {
             }
         }
 
-    /** Tomar foto a FULL RES escribiendo directo en MediaStore con TakePicture(uri) */
+
     private val takePicture =
         registerForActivityResult(ActivityResultContracts.TakePicture()) { saved: Boolean ->
-            // ---- FIX smart-cast: capturamos la var en una local inmutable ----
+
             val uri: Uri? = photoUri
             if (saved && uri != null) {
                 imgPreview.setImageURI(uri)
                 mostrarPropiedades(uri)
                 Toast.makeText(this, "Foto guardada en galería", Toast.LENGTH_SHORT).show()
             } else {
-                // Si se canceló, borrar el placeholder que insertamos
+
                 uri?.let { contentResolver.delete(it, null, null) }
                 Toast.makeText(this, "Foto cancelada", Toast.LENGTH_SHORT).show()
             }
-            // Limpiamos siempre la referencia
+
             photoUri = null
         }
 
-    /** Lanzador genérico para un único permiso (cámara o lectura de imágenes) */
+
     private val requestPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (!granted) {
                 Toast.makeText(this, "Permiso denegado", Toast.LENGTH_LONG).show()
                 pendingAction = PendingAction.NONE
             } else {
-                // Ejecutar la acción pendiente tras conceder el permiso
+
                 when (val action = pendingAction) {
                     PendingAction.OPEN_GALLERY -> {
                         pendingAction = PendingAction.NONE
@@ -106,7 +106,7 @@ class ImagenActivity : AppCompatActivity() {
         }
     }
 
-    // -------------------- Permisos --------------------
+    // Permisos
 
     private fun asegurarPermisoGaleria(onOk: () -> Unit) {
         val permiso = if (Build.VERSION.SDK_INT >= 33)
@@ -157,15 +157,15 @@ class ImagenActivity : AppCompatActivity() {
             .show()
     }
 
-    // -------------------- Cámara FULL RES --------------------
+    // Cámara FULL RES
 
     private fun lanzarCamaraFullRes() {
-        // Crear entrada en MediaStore para guardar la foto a resolución completa
+
         val name = "IMG_${System.currentTimeMillis()}.jpg"
         val values = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, name)
             put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-            // En API 29+ no hace falta WRITE_EXTERNAL_STORAGE si usas MediaStore
+
         }
         photoUri = contentResolver.insert(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values
@@ -178,9 +178,9 @@ class ImagenActivity : AppCompatActivity() {
         takePicture.launch(target) // escribe FULL RES en esa URI (persistente)
     }
 
-    // -------------------- Utilidades: propiedades de imagen --------------------
+    //propiedades de imagen
 
-    /** Lee ancho/alto sin cargar el bitmap completo en memoria */
+
     private fun obtenerDimensiones(uri: Uri): Pair<Int, Int> {
         val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         var input: InputStream? = null
@@ -193,7 +193,6 @@ class ImagenActivity : AppCompatActivity() {
         return opts.outWidth to opts.outHeight
     }
 
-    /** Tamaño del archivo en bytes (si MediaStore lo expone) */
     private fun consultarTamanioBytes(uri: Uri): Long {
         contentResolver.query(uri, arrayOf(MediaStore.Images.Media.SIZE), null, null, null)
             ?.use { c ->
@@ -203,7 +202,6 @@ class ImagenActivity : AppCompatActivity() {
         return -1L
     }
 
-    /** Muestra URI, resolución y tamaño para corroborar calidad de captura */
     private fun mostrarPropiedades(uri: Uri) {
         val (w, h) = obtenerDimensiones(uri)
         val sizeBytes = consultarTamanioBytes(uri)

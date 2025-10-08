@@ -68,21 +68,18 @@ class ContactosActivity : AppCompatActivity() {
     }
 
     private fun cargarContactos() {
-        // Proyección: OBLIGATORIO que incluya _ID para SimpleCursorAdapter
         val projection = arrayOf(
             ContactsContract.Contacts._ID,
             ContactsContract.Contacts.DISPLAY_NAME_PRIMARY
         )
 
-        // Orden alfabético por nombre visible
         val sortOrder = ContactsContract.Contacts.DISPLAY_NAME_PRIMARY + " ASC"
 
-        // Cierra cursor previo si existía
         cursor?.close()
         cursor = contentResolver.query(
             ContactsContract.Contacts.CONTENT_URI,
             projection,
-            null, // puedes filtrar: "${ContactsContract.Contacts.HAS_PHONE_NUMBER} = 1"
+            null,
             null,
             sortOrder
         )
@@ -92,7 +89,7 @@ class ContactosActivity : AppCompatActivity() {
             return
         }
 
-        // Mapea DISPLAY_NAME_PRIMARY -> tvNombre (el ícono ya está en el layout)
+
         adapter = SimpleCursorAdapter(
             this,
             R.layout.item_contacto,

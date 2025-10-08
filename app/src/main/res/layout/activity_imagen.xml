@@ -7,9 +7,7 @@
     android:gravity="center_horizontal"
     android:padding="16dp">
 
-    <!-- Imagen centrada con tamaño fijo, independiente del tamaño de entrada -->
 
-    <!-- Propiedades de la imagen (ancho x alto, tamaño, uri) para verificar resolución -->
     <ImageView
         android:id="@+id/imgPreview"
         android:layout_width="280dp"
